@@ -1,4 +1,6 @@
 #include "mongoose.h"
+#include "FilePush.h"
+#include <iostream>
 
 static const char *s_http_addr = "http://0.0.0.0:51100";    // HTTP port
 static const char *s_https_addr = "https://0.0.0.0:51143";  // HTTPS port
@@ -31,7 +33,18 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                                      mg_straddr(&t->rem, rem, sizeof(rem)));
             }
             mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
-        } else if (mg_http_match_uri(hm, "/api/v1/*")) {
+        } else if (mg_http_match_uri(hm, "/api/push")) {
+            const char * rtspUrl = "rtsp://192.168.0.101/001.sdp";
+            const char * filepath = "c:/Fade.mp3";
+            unsigned int duration = 0;
+            unsigned int loop = 1;
+            std::cout << "Begin..." << std::endl;
+            FilePush* session = new FilePush(rtspUrl, filepath, duration, loop);
+            bool flag = session->start();
+            std::cout << "Start to push..." << flag << std::endl;
+            mg_http_reply(c, 200, "", "{\"result\": \"%.*s\"}\n", (int) hm->uri.len,
+                          hm->uri.ptr);
+        }else if (mg_http_match_uri(hm, "/api/v1/*")) {
             mg_http_reply(c, 200, "", "{\"result\": \"%.*s\"}\n", (int) hm->uri.len,
                           hm->uri.ptr);
         } else {
